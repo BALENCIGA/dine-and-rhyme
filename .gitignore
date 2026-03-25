@@ -1,0 +1,14 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+photos/inbox/*
+photos/posted/*
+!photos/inbox/.gitkeep
+!photos/posted/.gitkeep
+*.egg-info/
+dist/
+build/
+.DS_Store
+.claude/
