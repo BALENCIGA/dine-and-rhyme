@@ -231,7 +231,12 @@
   </span>
   <span class="api-key-saved" id="apiKeySaved"></span>
   <div class="api-key-input" id="apiKeyInput">
-    <div class="section-label" style="margin-top:8px">APIキー</div>
+    <div class="section-label" style="margin-top:8px">音楽の好み</div>
+    <textarea id="musicTaste" placeholder="例: 90s hip-hop、A Tribe Called Quest、DJ Premier、Nujabes" style="height:50px;margin-bottom:8px"></textarea>
+    <div style="font-size:12px;color:#666;margin-bottom:12px">
+      楽曲提案に反映されます。保存されるので毎回入力不要。
+    </div>
+    <div class="section-label">APIキー</div>
     <input type="text" id="apiKey" placeholder="Gemini APIキーを入力" style="margin-bottom:8px">
     <div class="section-label">モデル</div>
     <select id="modelSelect" style="width:100%;padding:12px;border:1px solid #333;border-radius:12px;background:#1a1a1a;color:#f0f0f0;font-size:16px;margin-bottom:8px;-webkit-appearance:none;">
@@ -279,6 +284,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('apiKey').value = savedKey;
     document.getElementById('apiKeySaved').textContent = '(設定済み)';
   }
+  const savedMusic = localStorage.getItem('music_taste');
+  if (savedMusic) {
+    document.getElementById('musicTaste').value = savedMusic;
+  }
 });
 
 // --- APIキー表示切替 ---
@@ -286,6 +295,11 @@ function toggleApiKey() {
   const el = document.getElementById('apiKeyInput');
   el.classList.toggle('show');
 }
+
+// --- 音楽の好み保存 ---
+document.getElementById('musicTaste').addEventListener('change', (e) => {
+  localStorage.setItem('music_taste', e.target.value.trim());
+});
 
 // --- APIキー保存 ---
 document.getElementById('apiKey').addEventListener('change', (e) => {
@@ -356,7 +370,7 @@ function fileToBase64(file) {
 }
 
 // --- プロンプト ---
-function buildPrompt(shopName, comment) {
+function buildPrompt(shopName, comment, musicTaste) {
   return `You are the dedicated caption writer for the Instagram account "dine_and_rhyme".
 
 Account concept:
@@ -461,6 +475,19 @@ Required output format:
 3. English rap: exactly 8 lines
 4. Blank line
 5. English hashtags: exactly 5 hashtags
+6. Blank line
+7. "🎵 おすすめ楽曲" on its own line
+8. Exactly 3 song recommendations, each on its own line in this format:
+   アーティスト名 — 曲名（選んだ理由を10字以内で）
+
+Song recommendation rules:
+- Choose songs available on Instagram's music library.
+- Match the vibe, tempo, and mood of the generated caption.
+- Prefer well-known tracks that listeners will recognize.
+- Mix genres: hip-hop, R&B, J-pop, lo-fi, etc. — whatever fits the food and mood.
+- At least one song should have a Japanese or Asian connection if the restaurant is Japanese/Asian.
+- Do not pick the same songs every time — be creative and varied.
+${musicTaste ? `- IMPORTANT: The user's music taste is: "${musicTaste}". Prioritize songs and artists that align with this taste while still matching the food/mood vibe.` : ''}
 
 Hashtag rules:
 - Exactly 5 hashtags, all in English.
@@ -490,6 +517,7 @@ Silently review the draft and rewrite if needed until all are true:
 - The caption does not sound like luxury bragging.
 - All provided facts are accurate.
 - The result is clean and ready to paste into Instagram.
+- The 3 song recommendations match the mood and are likely available on Instagram.
 
 If the user gives a special format request later (for example: story only, Japanese only, 16 bars, shorter version, no English, etc.), follow that request while preserving the same tone, flow, respect, humor, and self-aware style.
 
@@ -541,7 +569,8 @@ async function generate() {
         }
       });
     });
-    parts.push({ text: buildPrompt(shopName, comment) });
+    const musicTaste = document.getElementById('musicTaste').value.trim() || localStorage.getItem('music_taste') || '';
+    parts.push({ text: buildPrompt(shopName, comment, musicTaste) });
 
     const requestBody = {
       contents: [{ parts: parts }],
