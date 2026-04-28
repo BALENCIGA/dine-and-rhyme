@@ -202,6 +202,325 @@
     color: #ff8888;
   }
   .error.show { display: block; }
+
+  /* 1案/3案 セグメントトグル */
+  .segment-toggle {
+    display: flex;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 16px;
+    gap: 4px;
+  }
+  .segment-toggle button {
+    flex: 1;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #888;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    -webkit-appearance: none;
+  }
+  .segment-toggle button.active {
+    background: #e74c3c;
+    color: white;
+  }
+
+  /* バリアントカード */
+  .variant-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .variant-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 16px;
+    padding: 16px;
+  }
+  .variant-card.selected { border-color: #e74c3c; }
+  .variant-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #888;
+    font-weight: 600;
+  }
+  .variant-card-body {
+    white-space: pre-wrap;
+    line-height: 1.7;
+    font-size: 14px;
+    max-height: 280px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 12px;
+  }
+  .variant-card-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .variant-card-actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #e74c3c;
+    background: transparent;
+    color: #e74c3c;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-appearance: none;
+  }
+  .variant-card-actions button:active { background: #e74c3c; color: white; }
+  .variant-card-actions button.copied {
+    background: #27ae60;
+    border-color: #27ae60;
+    color: white;
+  }
+  .variant-card.error-card {
+    border-color: #5a2020;
+    background: #1f1010;
+    color: #ff8888;
+    font-size: 13px;
+  }
+
+  /* 部分再生成バー */
+  .regen-bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 12px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+  }
+  .regen-bar button {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid #444;
+    background: #1a1a1a;
+    color: #ddd;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-appearance: none;
+  }
+  .regen-bar button:active {
+    background: #e74c3c;
+    border-color: #e74c3c;
+    color: white;
+  }
+  .regen-bar button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .regen-bar button.undo {
+    border-color: #555;
+    color: #aaa;
+  }
+
+  /* 履歴セクション */
+  .history-section {
+    margin-top: 32px;
+    border-top: 1px solid #222;
+    padding-top: 20px;
+  }
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    padding: 8px 0;
+  }
+  .history-header h2 {
+    font-size: 16px;
+    color: #ddd;
+    font-weight: 600;
+  }
+  .history-header .toggle-icon {
+    color: #888;
+    font-size: 14px;
+  }
+  .history-controls {
+    display: none;
+    gap: 8px;
+    align-items: center;
+    margin: 8px 0 12px;
+    font-size: 13px;
+    color: #888;
+  }
+  .history-controls.show { display: flex; }
+  .history-controls label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .history-controls .clear-all {
+    margin-left: auto;
+    color: #e74c3c;
+    background: transparent;
+    border: 1px solid #5a2020;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    -webkit-appearance: none;
+  }
+  .history-list {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .history-list.show { display: flex; }
+  .history-empty {
+    color: #666;
+    font-size: 13px;
+    text-align: center;
+    padding: 24px 0;
+  }
+  .history-item {
+    background: #141414;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .history-item-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    gap: 8px;
+  }
+  .history-item-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .history-item-shop {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f0f0f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .history-item-date {
+    font-size: 11px;
+    color: #777;
+    margin-top: 2px;
+  }
+  .history-item-thumbs {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .history-item-thumbs img {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    object-fit: cover;
+  }
+  .history-item-thumbs .more {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: #222;
+    color: #888;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .history-item-detail {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #2a2a2a;
+  }
+  .history-item-detail.show { display: block; }
+  .history-item-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .history-item-tabs button {
+    padding: 6px 10px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background: transparent;
+    color: #888;
+    font-size: 12px;
+    cursor: pointer;
+    -webkit-appearance: none;
+  }
+  .history-item-tabs button.active {
+    background: #e74c3c;
+    border-color: #e74c3c;
+    color: white;
+  }
+  .history-item-caption {
+    background: #0a0a0a;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    max-height: 240px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 10px;
+  }
+  .history-item-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .history-item-actions button {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    background: transparent;
+    color: #ddd;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-appearance: none;
+  }
+  .history-item-actions .copy:active {
+    background: #e74c3c;
+    border-color: #e74c3c;
+    color: white;
+  }
+  .history-item-actions .copy.copied {
+    background: #27ae60;
+    border-color: #27ae60;
+    color: white;
+  }
+  .history-item-actions .delete {
+    flex: 0 0 auto;
+    border-color: #5a2020;
+    color: #e74c3c;
+  }
+
+  /* 履歴の初回案内 */
+  .history-notice {
+    color: #777;
+    font-size: 12px;
+    text-align: center;
+    padding: 16px 8px;
+    line-height: 1.5;
+  }
 </style>
 </head>
 <body>
@@ -245,6 +564,12 @@
   </div>
 </div>
 
+<!-- バリエーション数 -->
+<div class="segment-toggle" role="tablist" aria-label="バリエーション数">
+  <button id="seg1" class="active" onclick="setVariantCount(1)">1案で生成</button>
+  <button id="seg3" onclick="setVariantCount(3)">3案で生成</button>
+</div>
+
 <!-- 生成ボタン -->
 <button class="generate-btn" id="generateBtn" onclick="generate()">
   ライムを生成する
@@ -262,22 +587,216 @@
 <!-- 結果 -->
 <div class="result" id="result">
   <div class="section-label">生成されたキャプション</div>
-  <div class="result-box" id="resultText"></div>
-  <button class="copy-btn" id="copyBtn" onclick="copyResult()">
-    クリップボードにコピー
-  </button>
+
+  <!-- 1案モードの単一表示 -->
+  <div id="singleResult">
+    <div class="result-box" id="resultText"></div>
+    <button class="copy-btn" id="copyBtn" onclick="copyResult()">
+      クリップボードにコピー
+    </button>
+  </div>
+
+  <!-- 3案モードのカード表示 -->
+  <div id="variantCards" class="variant-cards" style="display:none"></div>
+
+  <!-- 部分再生成バー（採用後に表示） -->
+  <div class="regen-bar" id="regenBar" style="display:none">
+    <button onclick="regeneratePart('jp', 'Rewrite ONLY the Japanese 8 lines. Keep English and hashtags identical. Output the full caption in the same exact format (Japanese 8 lines, blank line, English 8 lines, blank line, 5 hashtags).')">日本語のみ</button>
+    <button onclick="regeneratePart('en', 'Rewrite ONLY the English 8 lines. Keep Japanese and hashtags identical. Output the full caption in the same exact format.')">英語のみ</button>
+    <button onclick="regeneratePart('tags', 'Rewrite ONLY the 5 hashtags. Keep both rap sections identical. Output the full caption in the same exact format.')">タグのみ</button>
+    <button onclick="regeneratePart(null, 'Regenerate the entire caption with more aggressive, edgy, punchier flow. Push the self-deprecation harder. Keep the same format and grounding rules.')">攻める</button>
+    <button onclick="regeneratePart(null, 'Regenerate the entire caption with a calmer, more refined, slightly more polite tone. Keep the groove but reduce the edge. Keep the same format and grounding rules.')">丁寧に</button>
+    <button class="undo" id="undoBtn" onclick="undoRegen()" disabled>戻す</button>
+  </div>
 </div>
 
-<script>
-// --- 状態管理 ---
-let selectedFiles = [];
+<!-- 履歴セクション -->
+<section class="history-section" id="historySection">
+  <div class="history-header" onclick="toggleHistory()">
+    <h2>履歴</h2>
+    <span class="toggle-icon" id="historyToggleIcon">▶</span>
+  </div>
+  <div class="history-controls" id="historyControls">
+    <label>
+      <input type="checkbox" id="historyEnabled" checked>
+      履歴を保存する
+    </label>
+    <button class="clear-all" onclick="clearAllHistory()">全削除</button>
+  </div>
+  <div class="history-list" id="historyList"></div>
+</section>
 
-// --- 初期化 ---
+<script>
+// ===== 状態管理 =====
+let selectedFiles = [];
+let variantCount = 1;             // 1 or 3
+let currentCaption = '';          // 採用中のキャプション全文
+let currentContext = null;        // { shopName, comment, model, files } 採用時の文脈（部分再生成で再利用）
+let currentHistoryEntryId = null; // 採用キャプションが履歴のどのエントリ由来か
+let undoSnapshot = null;          // 直前のcaption（1段階のみ）
+let isGenerating = false;
+
+// ===== 設定キー =====
+const HISTORY_INDEX_KEY = 'dr_history_index_v1';
+const HISTORY_ENABLED_KEY = 'dr_history_enabled_v1';
+const HISTORY_LIMIT = 100;
+const THUMB_MAX_SIDE = 128;
+const THUMB_QUALITY = 0.6;
+
+// ===== IndexedDB 薄ラッパ（サムネ画像保存用） =====
+const thumbsDB = (() => {
+  let dbPromise = null;
+  function open() {
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve, reject) => {
+      if (!('indexedDB' in window)) {
+        reject(new Error('IndexedDB not available'));
+        return;
+      }
+      const req = indexedDB.open('dine_rhyme', 1);
+      req.onupgradeneeded = () => {
+        req.result.createObjectStore('thumbs', { keyPath: 'id' });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    return dbPromise;
+  }
+  function tx(mode) {
+    return open().then(db => db.transaction('thumbs', mode).objectStore('thumbs'));
+  }
+  return {
+    async put(id, blobs) {
+      try {
+        const store = await tx('readwrite');
+        return new Promise((resolve, reject) => {
+          const r = store.put({ id, blobs });
+          r.onsuccess = () => resolve();
+          r.onerror = () => reject(r.error);
+        });
+      } catch (e) {
+        // IndexedDB 不可環境では黙ってスキップ
+      }
+    },
+    async get(id) {
+      try {
+        const store = await tx('readonly');
+        return new Promise((resolve) => {
+          const r = store.get(id);
+          r.onsuccess = () => resolve(r.result ? r.result.blobs : null);
+          r.onerror = () => resolve(null);
+        });
+      } catch { return null; }
+    },
+    async delete(id) {
+      try {
+        const store = await tx('readwrite');
+        return new Promise((resolve) => {
+          const r = store.delete(id);
+          r.onsuccess = () => resolve();
+          r.onerror = () => resolve();
+        });
+      } catch {}
+    },
+    async clear() {
+      try {
+        const store = await tx('readwrite');
+        return new Promise((resolve) => {
+          const r = store.clear();
+          r.onsuccess = () => resolve();
+          r.onerror = () => resolve();
+        });
+      } catch {}
+    }
+  };
+})();
+
+// ===== 履歴インデックス（localStorage） =====
+const historyIndex = {
+  load() {
+    try {
+      return JSON.parse(localStorage.getItem(HISTORY_INDEX_KEY) || '[]');
+    } catch { return []; }
+  },
+  save(arr) {
+    // 容量超過時は古いものから段階的に削減
+    let working = arr.slice();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        localStorage.setItem(HISTORY_INDEX_KEY, JSON.stringify(working));
+        return working;
+      } catch (e) {
+        // QuotaExceeded → 最古10件削減して再試行
+        const dropped = working.splice(-10);
+        // 対応するサムネも削除
+        dropped.forEach(d => thumbsDB.delete(d.id));
+        if (working.length === 0) break;
+      }
+    }
+    return working;
+  },
+  isEnabled() {
+    const v = localStorage.getItem(HISTORY_ENABLED_KEY);
+    return v === null ? true : v === '1';
+  },
+  setEnabled(v) {
+    localStorage.setItem(HISTORY_ENABLED_KEY, v ? '1' : '0');
+  }
+};
+
+// ===== キャプション分割・結合 =====
+// フォーマット: 日本語8行 / 空行 / 英語8行 / 空行 / ハッシュタグ1行
+function splitCaption(text) {
+  const blocks = String(text || '').trim().split(/\n\s*\n/);
+  return {
+    jp: (blocks[0] || '').trim(),
+    en: (blocks[1] || '').trim(),
+    tags: (blocks.slice(2).join('\n\n') || '').trim()
+  };
+}
+function mergeCaption(parts) {
+  return [parts.jp, parts.en, parts.tags].filter(Boolean).join('\n\n');
+}
+
+// ===== セグメントトグル =====
+function setVariantCount(n) {
+  variantCount = n;
+  document.getElementById('seg1').classList.toggle('active', n === 1);
+  document.getElementById('seg3').classList.toggle('active', n === 3);
+  const btn = document.getElementById('generateBtn');
+  btn.textContent = n === 1 ? 'ライムを生成する' : 'ライムを3案 同時生成';
+}
+
+// ===== 履歴トグル =====
+function toggleHistory() {
+  const list = document.getElementById('historyList');
+  const ctrl = document.getElementById('historyControls');
+  const icon = document.getElementById('historyToggleIcon');
+  const opening = !list.classList.contains('show');
+  list.classList.toggle('show', opening);
+  ctrl.classList.toggle('show', opening);
+  icon.textContent = opening ? '▼' : '▶';
+  if (opening) renderHistory();
+}
+
+// ===== 初期化 =====
 document.addEventListener('DOMContentLoaded', () => {
   const savedKey = localStorage.getItem('gemini_api_key');
   if (savedKey) {
     document.getElementById('apiKey').value = savedKey;
     document.getElementById('apiKeySaved').textContent = '(設定済み)';
+  }
+
+  // 履歴の有効/無効
+  const enabledCheckbox = document.getElementById('historyEnabled');
+  enabledCheckbox.checked = historyIndex.isEnabled();
+  enabledCheckbox.addEventListener('change', (e) => {
+    historyIndex.setEnabled(e.target.checked);
+  });
+
+  // 隠しテスト
+  if (new URLSearchParams(location.search).get('test') === '1') {
+    runSelfTests();
   }
 });
 
@@ -321,38 +840,52 @@ function updatePhotoArea() {
   area.innerHTML = html;
 }
 
-// --- 画像をBase64に変換 ---
-function fileToBase64(file) {
+// --- 画像のリサイズ共通処理 ---
+function _loadAndResize(file, maxSize, quality, asBlob) {
   return new Promise((resolve, reject) => {
-    // 画像をリサイズして送信量を削減（長辺1024px以下）
+    const url = URL.createObjectURL(file);
     const img = new Image();
+    const cleanup = () => URL.revokeObjectURL(url);
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const maxSize = 1024;
-      let { width, height } = img;
-
-      if (width > maxSize || height > maxSize) {
-        if (width > height) {
-          height = Math.round(height * maxSize / width);
-          width = maxSize;
-        } else {
-          width = Math.round(width * maxSize / height);
-          height = maxSize;
+      try {
+        let { width, height } = img;
+        if (width > maxSize || height > maxSize) {
+          if (width > height) {
+            height = Math.round(height * maxSize / width);
+            width = maxSize;
+          } else {
+            width = Math.round(width * maxSize / height);
+            height = maxSize;
+          }
         }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        if (asBlob) {
+          canvas.toBlob(b => { cleanup(); resolve(b); }, 'image/jpeg', quality);
+        } else {
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          cleanup();
+          resolve(dataUrl.split(',')[1]);
+        }
+      } catch (e) {
+        cleanup();
+        reject(e);
       }
-
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-      const base64 = dataUrl.split(',')[1];
-      resolve(base64);
-      URL.revokeObjectURL(img.src);
     };
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
+    img.onerror = (e) => { cleanup(); reject(e); };
+    img.src = url;
   });
+}
+
+// API送信用Base64（長辺1024px、品質0.8）
+function fileToBase64(file, maxSize = 1024, quality = 0.8) {
+  return _loadAndResize(file, maxSize, quality, false);
+}
+// 履歴サムネ用Blob（長辺128px、品質0.6）
+function fileToThumbBlob(file) {
+  return _loadAndResize(file, THUMB_MAX_SIDE, THUMB_QUALITY, true);
 }
 
 // --- プロンプト ---
@@ -496,90 +1029,160 @@ If the user gives a special format request later (for example: story only, Japan
 Write like a skilled underground rapper who genuinely loves food.`;
 }
 
-// --- 生成 ---
-async function generate() {
+// --- 部分再生成・トーン変更用プロンプト ---
+function buildRegenPrompt(shopName, comment, baseCaption, directive) {
+  const base = buildPrompt(shopName, comment);
+  return `${base}
+
+=== EXISTING DRAFT ===
+${baseCaption}
+
+=== REGENERATION INSTRUCTION ===
+${directive}
+
+ALWAYS output the FULL caption in the required format (Japanese 8 lines, blank line, English 8 lines, blank line, 5 hashtags). Do not output explanations, partial content, or anything else.`;
+}
+
+// --- Gemini API 1回呼び出し ---
+async function callGemini({ apiKey, model, base64Images, prompt }) {
+  const parts = [];
+  base64Images.forEach(b64 => {
+    parts.push({ inline_data: { mime_type: 'image/jpeg', data: b64 } });
+  });
+  parts.push({ text: prompt });
+
+  const requestBody = {
+    contents: [{ parts }],
+    generationConfig: { temperature: 1.0, maxOutputTokens: 4096 }
+  };
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    }
+  );
+
+  const data = await response.json();
+
+  if (response.status === 429) {
+    const err = new Error(data?.error?.message || 'レート制限に達しました');
+    err.code = 429;
+    throw err;
+  }
+  if (data.error) {
+    throw new Error(data.error.message || 'APIエラーが発生しました');
+  }
+
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    throw new Error('レスポンスからテキストを取得できませんでした');
+  }
+  return text;
+}
+
+// --- 共通生成関数 ---
+async function runGenerate({ apiKey, model, base64Images, shopName, comment, variantCount, baseCaption = null, directive = null }) {
+  const prompt = baseCaption
+    ? buildRegenPrompt(shopName, comment, baseCaption, directive)
+    : buildPrompt(shopName, comment) + (directive ? `\n\nAdditional directive:\n${directive}` : '');
+
+  if (variantCount === 1) {
+    const text = await callGemini({ apiKey, model, base64Images, prompt });
+    return [{ ok: true, text }];
+  }
+
+  // 並列 N 本
+  const tasks = Array.from({ length: variantCount }, () =>
+    callGemini({ apiKey, model, base64Images, prompt })
+  );
+  const settled = await Promise.allSettled(tasks);
+
+  // 全て429ならフォールバック: 直列リトライ
+  const all429 = settled.every(s => s.status === 'rejected' && s.reason?.code === 429);
+  if (all429) {
+    const out = [];
+    for (let i = 0; i < variantCount; i++) {
+      try {
+        const text = await callGemini({ apiKey, model, base64Images, prompt });
+        out.push({ ok: true, text });
+        if (i < variantCount - 1) await new Promise(r => setTimeout(r, 1500));
+      } catch (e) {
+        out.push({ ok: false, err: e.message });
+      }
+    }
+    return out;
+  }
+
+  return settled.map(s =>
+    s.status === 'fulfilled'
+      ? { ok: true, text: s.value }
+      : { ok: false, err: s.reason?.message || '生成に失敗しました' }
+  );
+}
+
+// --- 入力バリデーション ---
+function validateInputs() {
   const apiKey = document.getElementById('apiKey').value.trim() || localStorage.getItem('gemini_api_key');
   const shopName = document.getElementById('shopName').value.trim();
   const comment = document.getElementById('comment').value.trim();
 
-  // バリデーション
   if (!apiKey) {
     showError('APIキーを設定してください');
     toggleApiKey();
-    return;
+    return null;
   }
   if (selectedFiles.length === 0) {
     showError('写真を選択してください');
-    return;
+    return null;
   }
   if (!shopName) {
     showError('店名を入力してください');
-    return;
+    return null;
   }
 
-  // APIキーを保存
   localStorage.setItem('gemini_api_key', apiKey);
+  return { apiKey, shopName, comment, model: document.getElementById('modelSelect').value };
+}
 
-  // UI更新
+// --- メイン生成（1案 or 3案） ---
+async function generate() {
+  if (isGenerating) return;
+  const ctx = validateInputs();
+  if (!ctx) return;
+
+  isGenerating = true;
   hideError();
   document.getElementById('result').classList.remove('show');
   document.getElementById('loading').classList.add('show');
   document.getElementById('generateBtn').disabled = true;
+  // モード切替時の表示初期化
+  document.getElementById('singleResult').style.display = 'none';
+  document.getElementById('variantCards').style.display = 'none';
+  document.getElementById('regenBar').style.display = 'none';
 
   try {
-    // 画像をBase64変換（最大10枚）
     const filesToProcess = selectedFiles.slice(0, 10);
-    const base64Images = await Promise.all(filesToProcess.map(f => fileToBase64(f)));
+    const base64Images = await Promise.all(filesToProcess.map(f => fileToBase64(f, 1024, 0.8)));
 
-    // APIリクエスト構築
-    const parts = [];
-    base64Images.forEach(b64 => {
-      parts.push({
-        inline_data: {
-          mime_type: 'image/jpeg',
-          data: b64
-        }
-      });
+    const results = await runGenerate({
+      ...ctx, base64Images, variantCount
     });
-    parts.push({ text: buildPrompt(shopName, comment) });
 
-    const requestBody = {
-      contents: [{ parts: parts }],
-      generationConfig: {
-        temperature: 1.0,
-        maxOutputTokens: 4096
-      }
-    };
+    // サムネは採用時に作るが、3案モードでは結果を出した時点で1度だけ作っておく
+    const thumbBlobs = await Promise.all(filesToProcess.map(f => fileToThumbBlob(f)));
 
-    // Gemini API呼び出し（Pro を優先、ダメなら Flash にフォールバック）
-    const model = document.getElementById('modelSelect').value;
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      }
-    );
-
-    const data = await response.json();
-
-    if (data.error) {
-      throw new Error(data.error.message || 'APIエラーが発生しました');
+    if (variantCount === 1) {
+      const r = results[0];
+      if (!r.ok) throw new Error(r.err);
+      adoptCaption(r.text, ctx, filesToProcess.length, thumbBlobs, [r.text], 0);
+    } else {
+      renderVariantCards(results, ctx, filesToProcess.length, thumbBlobs);
     }
 
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-      throw new Error('レスポンスからテキストを取得できませんでした');
-    }
-
-    // 結果表示
-    document.getElementById('resultText').textContent = text;
     document.getElementById('result').classList.add('show');
-    document.getElementById('copyBtn').textContent = 'クリップボードにコピー';
-    document.getElementById('copyBtn').classList.remove('copied');
-
-    // 結果までスクロール
     document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
 
   } catch (err) {
@@ -587,7 +1190,380 @@ async function generate() {
   } finally {
     document.getElementById('loading').classList.remove('show');
     document.getElementById('generateBtn').disabled = false;
+    isGenerating = false;
   }
+}
+
+// --- 3案カードを描画 ---
+function renderVariantCards(results, ctx, thumbCount, thumbBlobs) {
+  const wrap = document.getElementById('variantCards');
+  wrap.innerHTML = '';
+  wrap.style.display = 'flex';
+
+  // 採用候補のキャプション全文を保持（採用時の履歴保存に使う）
+  const allCaptions = results.map(r => r.ok ? r.text : null);
+
+  results.forEach((r, idx) => {
+    const card = document.createElement('div');
+    card.className = 'variant-card' + (r.ok ? '' : ' error-card');
+
+    if (!r.ok) {
+      card.innerHTML = `<div class="variant-card-header">案 ${idx + 1}</div><div>生成失敗: ${escapeHtml(r.err || '')}</div>`;
+      wrap.appendChild(card);
+      return;
+    }
+
+    const header = document.createElement('div');
+    header.className = 'variant-card-header';
+    header.innerHTML = `<span>案 ${idx + 1}</span><span>${countLines(r.text)} 行</span>`;
+
+    const body = document.createElement('div');
+    body.className = 'variant-card-body';
+    body.textContent = r.text;
+
+    const actions = document.createElement('div');
+    actions.className = 'variant-card-actions';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = 'コピー';
+    copyBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(r.text);
+        copyBtn.textContent = 'コピー済み';
+        copyBtn.classList.add('copied');
+        setTimeout(() => {
+          copyBtn.textContent = 'コピー';
+          copyBtn.classList.remove('copied');
+        }, 2000);
+      } catch {
+        showError('自動コピーに失敗しました');
+      }
+    };
+
+    const adoptBtn = document.createElement('button');
+    adoptBtn.textContent = 'これを採用';
+    adoptBtn.onclick = () => {
+      // 全カードのselected解除→このカードだけ
+      wrap.querySelectorAll('.variant-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      adoptCaption(r.text, ctx, thumbCount, thumbBlobs, allCaptions, idx);
+    };
+
+    actions.appendChild(copyBtn);
+    actions.appendChild(adoptBtn);
+    card.appendChild(header);
+    card.appendChild(body);
+    card.appendChild(actions);
+    wrap.appendChild(card);
+  });
+}
+
+// --- キャプションを「採用」状態にする（履歴保存 + 部分再生成可能化） ---
+async function adoptCaption(text, ctx, thumbCount, thumbBlobs, allCaptions, selectedIndex) {
+  currentCaption = text;
+  currentContext = { ...ctx, thumbCount };
+  undoSnapshot = null;
+  document.getElementById('undoBtn').disabled = true;
+
+  // 1案モード時はsingleResultを表示
+  if (variantCount === 1) {
+    document.getElementById('singleResult').style.display = 'block';
+    document.getElementById('resultText').textContent = text;
+    document.getElementById('copyBtn').textContent = 'クリップボードにコピー';
+    document.getElementById('copyBtn').classList.remove('copied');
+  }
+  // 3案モードでは variantCards はそのまま表示
+
+  // 部分再生成バーを表示
+  document.getElementById('regenBar').style.display = 'flex';
+
+  // 履歴に保存
+  if (historyIndex.isEnabled()) {
+    const entry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      ts: Date.now(),
+      shopName: ctx.shopName,
+      comment: ctx.comment,
+      model: ctx.model,
+      captions: allCaptions.filter(Boolean),
+      selectedIndex: Math.max(0, allCaptions.filter(Boolean).indexOf(text)),
+      thumbCount
+    };
+    currentHistoryEntryId = entry.id;
+    await saveToHistory(entry, thumbBlobs);
+  }
+}
+
+// --- ヘルパ ---
+function countLines(text) { return String(text || '').split('\n').length; }
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// ===== 部分再生成 =====
+async function regeneratePart(part, directive) {
+  if (isGenerating) return;
+  if (!currentCaption || !currentContext) {
+    showError('まず生成してから再生成してください');
+    return;
+  }
+  if (selectedFiles.length === 0) {
+    showError('部分再生成には写真が必要です。再選択してください');
+    return;
+  }
+  const ctx = validateInputs();
+  if (!ctx) return;
+
+  isGenerating = true;
+  hideError();
+  document.getElementById('loading').classList.add('show');
+  document.querySelectorAll('#regenBar button').forEach(b => b.disabled = true);
+
+  try {
+    const filesToProcess = selectedFiles.slice(0, 10);
+    const base64Images = await Promise.all(filesToProcess.map(f => fileToBase64(f, 1024, 0.8)));
+    const results = await runGenerate({
+      ...ctx, base64Images, variantCount: 1, baseCaption: currentCaption, directive
+    });
+    if (!results[0].ok) throw new Error(results[0].err);
+    let newText = results[0].text;
+
+    // クライアント側保護: part指定があれば、他パートを旧版で強制上書き
+    if (part) {
+      const oldP = splitCaption(currentCaption);
+      const newP = splitCaption(newText);
+      newText = mergeCaption({
+        jp: part === 'jp' ? newP.jp : oldP.jp,
+        en: part === 'en' ? newP.en : oldP.en,
+        tags: part === 'tags' ? newP.tags : oldP.tags
+      });
+    }
+
+    undoSnapshot = currentCaption;
+    currentCaption = newText;
+
+    // 表示更新
+    if (variantCount === 1) {
+      document.getElementById('resultText').textContent = newText;
+      document.getElementById('copyBtn').textContent = 'クリップボードにコピー';
+      document.getElementById('copyBtn').classList.remove('copied');
+    } else {
+      // 3案モードで採用後の再生成: 選択カードのbody更新
+      document.querySelectorAll('.variant-card.selected .variant-card-body').forEach(b => {
+        b.textContent = newText;
+      });
+    }
+
+    // 履歴に追加（新規エントリ扱い、後から比較可能に）
+    if (historyIndex.isEnabled()) {
+      const thumbBlobs = await Promise.all(filesToProcess.map(f => fileToThumbBlob(f)));
+      const entry = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        ts: Date.now(),
+        shopName: ctx.shopName,
+        comment: ctx.comment,
+        model: ctx.model,
+        captions: [newText],
+        selectedIndex: 0,
+        thumbCount: filesToProcess.length
+      };
+      currentHistoryEntryId = entry.id;
+      await saveToHistory(entry, thumbBlobs);
+    }
+
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    document.getElementById('loading').classList.remove('show');
+    document.querySelectorAll('#regenBar button').forEach(b => b.disabled = false);
+    document.getElementById('undoBtn').disabled = !undoSnapshot;
+    isGenerating = false;
+  }
+}
+
+function undoRegen() {
+  if (!undoSnapshot) return;
+  currentCaption = undoSnapshot;
+  undoSnapshot = null;
+  document.getElementById('undoBtn').disabled = true;
+
+  if (variantCount === 1) {
+    document.getElementById('resultText').textContent = currentCaption;
+  } else {
+    document.querySelectorAll('.variant-card.selected .variant-card-body').forEach(b => {
+      b.textContent = currentCaption;
+    });
+  }
+}
+
+// ===== 履歴管理 =====
+async function saveToHistory(entry, thumbBlobs) {
+  const arr = historyIndex.load();
+  arr.unshift(entry);
+  // LRU: 上限超は最古から削減 + 対応するサムネも削除
+  while (arr.length > HISTORY_LIMIT) {
+    const drop = arr.pop();
+    await thumbsDB.delete(drop.id);
+  }
+  historyIndex.save(arr);
+  if (thumbBlobs && thumbBlobs.length > 0) {
+    await thumbsDB.put(entry.id, thumbBlobs);
+  }
+  // 履歴が開いていれば再描画
+  if (document.getElementById('historyList').classList.contains('show')) {
+    renderHistory();
+  }
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+async function renderHistory() {
+  const list = document.getElementById('historyList');
+  const arr = historyIndex.load();
+  list.innerHTML = '';
+
+  if (arr.length === 0) {
+    const notice = document.createElement('div');
+    notice.className = 'history-notice';
+    notice.textContent = '履歴は今後の生成から記録されます';
+    list.appendChild(notice);
+    return;
+  }
+
+  for (const entry of arr) {
+    list.appendChild(createHistoryItem(entry));
+  }
+}
+
+function createHistoryItem(entry) {
+  const item = document.createElement('div');
+  item.className = 'history-item';
+
+  const summary = document.createElement('div');
+  summary.className = 'history-item-summary';
+
+  const meta = document.createElement('div');
+  meta.className = 'history-item-meta';
+  const variantInfo = entry.captions.length > 1 ? `・${entry.captions.length}案` : '';
+  meta.innerHTML = `
+    <div class="history-item-shop">${escapeHtml(entry.shopName || '(店名なし)')}</div>
+    <div class="history-item-date">${formatDate(entry.ts)}${variantInfo}</div>
+  `;
+
+  const thumbs = document.createElement('div');
+  thumbs.className = 'history-item-thumbs';
+  loadThumbsForItem(entry.id, thumbs);
+
+  summary.appendChild(meta);
+  summary.appendChild(thumbs);
+
+  const detail = document.createElement('div');
+  detail.className = 'history-item-detail';
+
+  let activeIdx = entry.selectedIndex || 0;
+  if (activeIdx >= entry.captions.length) activeIdx = 0;
+
+  const captionEl = document.createElement('div');
+  captionEl.className = 'history-item-caption';
+  captionEl.textContent = entry.captions[activeIdx] || '';
+
+  if (entry.captions.length > 1) {
+    const tabs = document.createElement('div');
+    tabs.className = 'history-item-tabs';
+    entry.captions.forEach((_, idx) => {
+      const tabBtn = document.createElement('button');
+      tabBtn.textContent = `案 ${idx + 1}${idx === entry.selectedIndex ? ' ★' : ''}`;
+      if (idx === activeIdx) tabBtn.classList.add('active');
+      tabBtn.onclick = (e) => {
+        e.stopPropagation();
+        activeIdx = idx;
+        tabs.querySelectorAll('button').forEach((b, i) => b.classList.toggle('active', i === activeIdx));
+        captionEl.textContent = entry.captions[activeIdx];
+      };
+      tabs.appendChild(tabBtn);
+    });
+    detail.appendChild(tabs);
+  }
+  detail.appendChild(captionEl);
+
+  const actions = document.createElement('div');
+  actions.className = 'history-item-actions';
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'copy';
+  copyBtn.textContent = 'コピー';
+  copyBtn.onclick = async (e) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(entry.captions[activeIdx]);
+      copyBtn.textContent = 'コピー済み';
+      copyBtn.classList.add('copied');
+      setTimeout(() => {
+        copyBtn.textContent = 'コピー';
+        copyBtn.classList.remove('copied');
+      }, 2000);
+    } catch {
+      showError('自動コピーに失敗しました');
+    }
+  };
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'delete';
+  deleteBtn.textContent = '削除';
+  deleteBtn.onclick = async (e) => {
+    e.stopPropagation();
+    if (!confirm('この履歴を削除しますか?')) return;
+    await deleteHistoryEntry(entry.id);
+  };
+
+  actions.appendChild(copyBtn);
+  actions.appendChild(deleteBtn);
+  detail.appendChild(actions);
+
+  summary.onclick = () => detail.classList.toggle('show');
+
+  item.appendChild(summary);
+  item.appendChild(detail);
+  return item;
+}
+
+async function loadThumbsForItem(id, container) {
+  try {
+    const blobs = await thumbsDB.get(id);
+    if (!blobs || blobs.length === 0) return;
+    const showCount = Math.min(blobs.length, 3);
+    for (let i = 0; i < showCount; i++) {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(blobs[i]);
+      container.appendChild(img);
+    }
+    if (blobs.length > showCount) {
+      const more = document.createElement('div');
+      more.className = 'more';
+      more.textContent = `+${blobs.length - showCount}`;
+      container.appendChild(more);
+    }
+  } catch {}
+}
+
+async function deleteHistoryEntry(id) {
+  const arr = historyIndex.load().filter(e => e.id !== id);
+  historyIndex.save(arr);
+  await thumbsDB.delete(id);
+  if (currentHistoryEntryId === id) currentHistoryEntryId = null;
+  renderHistory();
+}
+
+async function clearAllHistory() {
+  if (!confirm('すべての履歴を削除します。よろしいですか?')) return;
+  localStorage.removeItem(HISTORY_INDEX_KEY);
+  await thumbsDB.clear();
+  currentHistoryEntryId = null;
+  renderHistory();
 }
 
 // --- コピー ---
@@ -621,6 +1597,31 @@ function showError(msg) {
 }
 function hideError() {
   document.getElementById('error').classList.remove('show');
+}
+
+// ===== セルフテスト（?test=1 で起動） =====
+function runSelfTests() {
+  const sample = '日本語1\n日本語2\n日本語3\n日本語4\n日本語5\n日本語6\n日本語7\n日本語8\n\nEnglish1\nEnglish2\nEnglish3\nEnglish4\nEnglish5\nEnglish6\nEnglish7\nEnglish8\n\n#tag1 #tag2 #tag3 #tag4 #tag5';
+  const parts = splitCaption(sample);
+  console.assert(parts.jp.split('\n').length === 8, '[selfTest] JP should be 8 lines');
+  console.assert(parts.en.split('\n').length === 8, '[selfTest] EN should be 8 lines');
+  console.assert(parts.tags.includes('#tag5'), '[selfTest] tags parsed');
+
+  const merged = mergeCaption(parts);
+  console.assert(merged === sample, '[selfTest] roundtrip mismatch');
+
+  const replaced = mergeCaption({ ...parts, jp: 'JP_NEW' });
+  console.assert(replaced.startsWith('JP_NEW'), '[selfTest] jp replaced');
+  console.assert(replaced.includes('English8'), '[selfTest] en preserved');
+  console.assert(replaced.includes('#tag5'), '[selfTest] tags preserved');
+
+  // 不完全フォーマット
+  const partial = splitCaption('only japanese');
+  console.assert(partial.jp === 'only japanese', '[selfTest] partial jp');
+  console.assert(partial.en === '', '[selfTest] partial en empty');
+  console.assert(partial.tags === '', '[selfTest] partial tags empty');
+
+  console.log('[Dine&Rhyme] selfTests OK');
 }
 </script>
 
