@@ -521,6 +521,22 @@
     padding: 16px 8px;
     line-height: 1.5;
   }
+
+  /* キャプション内: コピー境界線 + 楽曲ブロック */
+  .copy-boundary {
+    border-top: 1px dashed #333;
+    margin: 14px 0 10px;
+    padding-top: 8px;
+    font-size: 11px;
+    color: #666;
+    letter-spacing: 0.02em;
+  }
+  .songs-block {
+    white-space: pre-wrap;
+    color: #9a9a9a;
+    font-size: 13px;
+    line-height: 1.7;
+  }
 </style>
 </head>
 <body>
@@ -550,7 +566,12 @@
   </span>
   <span class="api-key-saved" id="apiKeySaved"></span>
   <div class="api-key-input" id="apiKeyInput">
-    <div class="section-label" style="margin-top:8px">APIキー</div>
+    <div class="section-label" style="margin-top:8px">音楽の好み</div>
+    <textarea id="musicTaste" placeholder="例: 90s hip-hop, A Tribe Called Quest, Pete Rock, DJ Premier" style="height:60px;margin-bottom:8px"></textarea>
+    <div style="font-size:12px;color:#666;margin-bottom:12px">
+      楽曲提案に反映されます。保存されるので毎回入力不要。
+    </div>
+    <div class="section-label">APIキー</div>
     <input type="text" id="apiKey" placeholder="Gemini APIキーを入力" style="margin-bottom:8px">
     <div class="section-label">モデル</div>
     <select id="modelSelect" style="width:100%;padding:12px;border:1px solid #333;border-radius:12px;background:#1a1a1a;color:#f0f0f0;font-size:16px;margin-bottom:8px;-webkit-appearance:none;">
@@ -601,9 +622,10 @@
 
   <!-- 部分再生成バー（採用後に表示） -->
   <div class="regen-bar" id="regenBar" style="display:none">
-    <button onclick="regeneratePart('jp', 'Rewrite ONLY the Japanese 8 lines. Keep English and hashtags identical. Output the full caption in the same exact format (Japanese 8 lines, blank line, English 8 lines, blank line, 5 hashtags).')">日本語のみ</button>
-    <button onclick="regeneratePart('en', 'Rewrite ONLY the English 8 lines. Keep Japanese and hashtags identical. Output the full caption in the same exact format.')">英語のみ</button>
-    <button onclick="regeneratePart('tags', 'Rewrite ONLY the 5 hashtags. Keep both rap sections identical. Output the full caption in the same exact format.')">タグのみ</button>
+    <button onclick="regeneratePart('jp', 'Rewrite ONLY the Japanese 8 lines. Keep the English, hashtags, and songs identical. Output the full caption in the same exact format.')">日本語のみ</button>
+    <button onclick="regeneratePart('en', 'Rewrite ONLY the English 8 lines. Keep the Japanese, hashtags, and songs identical. Output the full caption in the same exact format.')">英語のみ</button>
+    <button onclick="regeneratePart('tags', 'Rewrite ONLY the 5 hashtags. Keep both rap sections and songs identical. Output the full caption in the same exact format.')">タグのみ</button>
+    <button onclick="regeneratePart('songs', 'Rewrite ONLY the 3 song recommendations. Keep both rap sections and the hashtags identical. Output the full caption in the same exact format. Pick different songs from the previous draft — vary artists and eras.')">曲のみ</button>
     <button onclick="regeneratePart(null, 'Regenerate the entire caption with more aggressive, edgy, punchier flow. Push the self-deprecation harder. Keep the same format and grounding rules.')">攻める</button>
     <button onclick="regeneratePart(null, 'Regenerate the entire caption with a calmer, more refined, slightly more polite tone. Keep the groove but reduce the edge. Keep the same format and grounding rules.')">丁寧に</button>
     <button class="undo" id="undoBtn" onclick="undoRegen()" disabled>戻す</button>
@@ -639,9 +661,12 @@ let isGenerating = false;
 // ===== 設定キー =====
 const HISTORY_INDEX_KEY = 'dr_history_index_v1';
 const HISTORY_ENABLED_KEY = 'dr_history_enabled_v1';
+const MUSIC_TASTE_KEY = 'music_taste';
 const HISTORY_LIMIT = 100;
 const THUMB_MAX_SIDE = 128;
 const THUMB_QUALITY = 0.6;
+// 楽曲提案セクションの開始マーカー
+const SONG_SECTION_MARK = '🎵';
 
 // ===== IndexedDB 薄ラッパ（サムネ画像保存用） =====
 const thumbsDB = (() => {
@@ -745,17 +770,62 @@ const historyIndex = {
 };
 
 // ===== キャプション分割・結合 =====
-// フォーマット: 日本語8行 / 空行 / 英語8行 / 空行 / ハッシュタグ1行
+// フォーマット: 日本語8行 / 空行 / 英語8行 / 空行 / ハッシュタグ1行 / 空行 / 🎵 おすすめ楽曲 / 3曲
+// songs は SONG_SECTION_MARK (🎵) の行から末尾までをまとめて1パートとして扱う
 function splitCaption(text) {
-  const blocks = String(text || '').trim().split(/\n\s*\n/);
+  const raw = String(text || '').trim();
+  if (!raw) return { jp: '', en: '', tags: '', songs: '' };
+
+  // 🎵 を含む最初の行を境に songs を切り出す
+  const lines = raw.split('\n');
+  let songsStartIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes(SONG_SECTION_MARK)) { songsStartIdx = i; break; }
+  }
+  let main = raw, songs = '';
+  if (songsStartIdx >= 0) {
+    main = lines.slice(0, songsStartIdx).join('\n').trim();
+    songs = lines.slice(songsStartIdx).join('\n').trim();
+  }
+
+  const blocks = main.split(/\n\s*\n/);
   return {
     jp: (blocks[0] || '').trim(),
     en: (blocks[1] || '').trim(),
-    tags: (blocks.slice(2).join('\n\n') || '').trim()
+    tags: (blocks.slice(2).join('\n\n') || '').trim(),
+    songs
   };
 }
 function mergeCaption(parts) {
-  return [parts.jp, parts.en, parts.tags].filter(Boolean).join('\n\n');
+  const main = [parts.jp, parts.en, parts.tags].filter(Boolean).join('\n\n');
+  return parts.songs ? `${main}\n\n${parts.songs}` : main;
+}
+// コピー用: songs パートを除いた本文だけ返す（Instagram にそのまま貼れる形）
+function getCopyableCaption(text) {
+  const p = splitCaption(text);
+  return mergeCaption({ jp: p.jp, en: p.en, tags: p.tags });
+}
+// 表示用: 本文と songs を区切り線で視覚分離して container に流し込む
+function renderCaption(text, container) {
+  const parts = splitCaption(text);
+  const mainPart = mergeCaption({ jp: parts.jp, en: parts.en, tags: parts.tags });
+  container.innerHTML = '';
+
+  const mainEl = document.createElement('div');
+  mainEl.textContent = mainPart;
+  container.appendChild(mainEl);
+
+  if (parts.songs) {
+    const sep = document.createElement('div');
+    sep.className = 'copy-boundary';
+    sep.textContent = '↑ ここまでがコピー対象  ／  ↓ 楽曲提案（参考表示）';
+    container.appendChild(sep);
+
+    const songsEl = document.createElement('div');
+    songsEl.className = 'songs-block';
+    songsEl.textContent = parts.songs;
+    container.appendChild(songsEl);
+  }
 }
 
 // ===== セグメントトグル =====
@@ -786,6 +856,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('apiKey').value = savedKey;
     document.getElementById('apiKeySaved').textContent = '(設定済み)';
   }
+
+  // 音楽の好み: 保存値があれば復元、なければ DJ歴に合わせたデフォルトを初期入力
+  const savedMusic = localStorage.getItem(MUSIC_TASTE_KEY);
+  const musicEl = document.getElementById('musicTaste');
+  if (savedMusic !== null) {
+    musicEl.value = savedMusic;
+  } else {
+    musicEl.value = '90s hip-hop, golden era, old school, middle school, A Tribe Called Quest, Pete Rock, DJ Premier, Nas, Wu-Tang';
+  }
+  musicEl.addEventListener('change', (e) => {
+    localStorage.setItem(MUSIC_TASTE_KEY, e.target.value.trim());
+  });
 
   // 履歴の有効/無効
   const enabledCheckbox = document.getElementById('historyEnabled');
@@ -889,7 +971,7 @@ function fileToThumbBlob(file) {
 }
 
 // --- プロンプト ---
-function buildPrompt(shopName, comment) {
+function buildPrompt(shopName, comment, musicTaste) {
   return `You are the dedicated caption writer for the Instagram account "dine_and_rhyme".
 
 Account concept:
@@ -935,6 +1017,13 @@ Narrator voice:
 Restaurant: ${shopName}
 User notes: ${comment}
 (Photos are attached — observe every dish carefully)
+
+Restaurant name rules:
+- The restaurant name MUST appear in the lyrics — weave it naturally into the Japanese and/or English rap.
+- Use wordplay, puns, or phonetic tricks with the restaurant name when it improves the flow.
+- If the restaurant is well-known, draw on your knowledge of its signature dishes, style, history, or reputation to enrich the lyrics.
+- Do NOT fabricate facts — only reference what you genuinely know or what is visible in the photos.
+- The restaurant's craft and reputation should be respected and celebrated.
 
 Japanese rap rules:
 - Write exactly 8 lines.
@@ -994,12 +1083,26 @@ Required output format:
 3. English rap: exactly 8 lines
 4. Blank line
 5. English hashtags: exactly 5 hashtags
+6. Blank line
+7. "🎵 おすすめ楽曲" on its own line (this exact text, with the music note emoji)
+8. Exactly 3 song recommendations, each on its own line in this format:
+   アーティスト名 — 曲名（理由を10字以内で）
 
 Hashtag rules:
 - Exactly 5 hashtags, all in English.
 - Keep them catchy, discoverable, and relevant.
 - Mix food, mood, humor, and vibe.
 - Do not make them generic spam.
+
+Song recommendation rules:
+- Lean hip-hop / rap-adjacent. This is dine_and_rhyme — the soundtrack should feel like a DJ set, not a playlist.
+- Prefer 90s golden era hip-hop, boom-bap, mid-school, jazzy hip-hop, soulful rap-adjacent tracks. Real records that an old-school DJ would recognize.
+- Songs MUST be findable on Instagram's music library (well-known, released, real tracks). No obscure unreleased material, no fictional songs.
+- Match the vibe, tempo, and mood of the food and the caption. A heavy meal calls for heavier beats; a light dish calls for smoother grooves.
+- The 3 picks should feel curated, not random — different angles on the same mood (e.g. one classic, one deep cut, one slightly unexpected fit).
+- Vary your picks across generations — do not repeat the same go-to artists every time.
+- The reason in parentheses must be 10 Japanese characters or fewer. Make it punchy, evocative, not generic.${musicTaste ? `
+- The user's music taste hint: "${musicTaste}". Lean toward this taste — but still match the food/mood. Surprise occasionally.` : ''}
 
 Default structure guidance:
 - scene
@@ -1017,12 +1120,14 @@ Silently review the draft and rewrite if needed until all are true:
 - The Japanese feels catchy, not just descriptive.
 - There is audible rhyme or sound play.
 - The English rhymes naturally.
-- The restaurant is respected.
+- The restaurant name appears in the lyrics with respect and (ideally) wordplay.
 - The narrator has personality.
 - There is at least a slight humorous or self-deprecating turn.
 - The caption does not sound like luxury bragging.
 - All provided facts are accurate.
 - The result is clean and ready to paste into Instagram.
+- The 3 song recommendations are real tracks available on Instagram, hip-hop / rap-adjacent, and match the mood.
+- Each song reason is 10 Japanese characters or fewer.
 
 If the user gives a special format request later (for example: story only, Japanese only, 16 bars, shorter version, no English, etc.), follow that request while preserving the same tone, flow, respect, humor, and self-aware style.
 
@@ -1030,8 +1135,8 @@ Write like a skilled underground rapper who genuinely loves food.`;
 }
 
 // --- 部分再生成・トーン変更用プロンプト ---
-function buildRegenPrompt(shopName, comment, baseCaption, directive) {
-  const base = buildPrompt(shopName, comment);
+function buildRegenPrompt(shopName, comment, musicTaste, baseCaption, directive) {
+  const base = buildPrompt(shopName, comment, musicTaste);
   return `${base}
 
 === EXISTING DRAFT ===
@@ -1040,7 +1145,17 @@ ${baseCaption}
 === REGENERATION INSTRUCTION ===
 ${directive}
 
-ALWAYS output the FULL caption in the required format (Japanese 8 lines, blank line, English 8 lines, blank line, 5 hashtags). Do not output explanations, partial content, or anything else.`;
+ALWAYS output the FULL caption in the exact required format:
+1. Japanese 8 lines
+2. blank line
+3. English 8 lines
+4. blank line
+5. 5 hashtags
+6. blank line
+7. "🎵 おすすめ楽曲" line
+8. 3 songs (アーティスト — 曲名（理由10字以内）)
+
+Do not output explanations, partial content, or anything else.`;
 }
 
 // --- Gemini API 1回呼び出し ---
@@ -1087,10 +1202,10 @@ async function callGemini({ apiKey, model, base64Images, prompt }) {
 // variantCount > 1 のときは **逐次実行**。Safari + Gemini で並列3本同時発射すると
 // "Load failed" でまとめて落ちる事象が確認されたため、安定性を優先して直列化。
 // onPartial(idx, result) で1本完了ごとに呼び出し → progressive UI を実現
-async function runGenerate({ apiKey, model, base64Images, shopName, comment, variantCount, baseCaption = null, directive = null, onPartial = null }) {
+async function runGenerate({ apiKey, model, base64Images, shopName, comment, musicTaste = '', variantCount, baseCaption = null, directive = null, onPartial = null }) {
   const prompt = baseCaption
-    ? buildRegenPrompt(shopName, comment, baseCaption, directive)
-    : buildPrompt(shopName, comment) + (directive ? `\n\nAdditional directive:\n${directive}` : '');
+    ? buildRegenPrompt(shopName, comment, musicTaste, baseCaption, directive)
+    : buildPrompt(shopName, comment, musicTaste) + (directive ? `\n\nAdditional directive:\n${directive}` : '');
 
   const results = [];
   for (let i = 0; i < variantCount; i++) {
@@ -1114,6 +1229,7 @@ function validateInputs() {
   const apiKey = document.getElementById('apiKey').value.trim() || localStorage.getItem('gemini_api_key');
   const shopName = document.getElementById('shopName').value.trim();
   const comment = document.getElementById('comment').value.trim();
+  const musicTaste = document.getElementById('musicTaste').value.trim() || localStorage.getItem(MUSIC_TASTE_KEY) || '';
 
   if (!apiKey) {
     showError('APIキーを設定してください');
@@ -1130,7 +1246,8 @@ function validateInputs() {
   }
 
   localStorage.setItem('gemini_api_key', apiKey);
-  return { apiKey, shopName, comment, model: document.getElementById('modelSelect').value };
+  if (musicTaste) localStorage.setItem(MUSIC_TASTE_KEY, musicTaste);
+  return { apiKey, shopName, comment, musicTaste, model: document.getElementById('modelSelect').value };
 }
 
 // --- メイン生成（1案 or 3案） ---
@@ -1230,7 +1347,7 @@ function fillVariantCard(card, idx, result, ctx, thumbCount, thumbBlobs, allCapt
 
   const body = document.createElement('div');
   body.className = 'variant-card-body';
-  body.textContent = text;
+  renderCaption(text, body);
 
   const actions = document.createElement('div');
   actions.className = 'variant-card-actions';
@@ -1239,7 +1356,7 @@ function fillVariantCard(card, idx, result, ctx, thumbCount, thumbBlobs, allCapt
   copyBtn.textContent = 'コピー';
   copyBtn.onclick = async () => {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(getCopyableCaption(text));
       copyBtn.textContent = 'コピー済み';
       copyBtn.classList.add('copied');
       setTimeout(() => {
@@ -1288,7 +1405,7 @@ async function adoptCaption(text, ctx, thumbCount, thumbBlobs, allCaptions, sele
   // 1案モード時はsingleResultを表示
   if (variantCount === 1) {
     document.getElementById('singleResult').style.display = 'block';
-    document.getElementById('resultText').textContent = text;
+    renderCaption(text, document.getElementById('resultText'));
     document.getElementById('copyBtn').textContent = 'クリップボードにコピー';
     document.getElementById('copyBtn').classList.remove('copied');
   }
@@ -1355,7 +1472,8 @@ async function regeneratePart(part, directive) {
       newText = mergeCaption({
         jp: part === 'jp' ? newP.jp : oldP.jp,
         en: part === 'en' ? newP.en : oldP.en,
-        tags: part === 'tags' ? newP.tags : oldP.tags
+        tags: part === 'tags' ? newP.tags : oldP.tags,
+        songs: part === 'songs' ? newP.songs : oldP.songs
       });
     }
 
@@ -1364,13 +1482,13 @@ async function regeneratePart(part, directive) {
 
     // 表示更新
     if (variantCount === 1) {
-      document.getElementById('resultText').textContent = newText;
+      renderCaption(newText, document.getElementById('resultText'));
       document.getElementById('copyBtn').textContent = 'クリップボードにコピー';
       document.getElementById('copyBtn').classList.remove('copied');
     } else {
       // 3案モードで採用後の再生成: 選択カードのbody更新
       document.querySelectorAll('.variant-card.selected .variant-card-body').forEach(b => {
-        b.textContent = newText;
+        renderCaption(newText, b);
       });
     }
 
@@ -1408,10 +1526,10 @@ function undoRegen() {
   document.getElementById('undoBtn').disabled = true;
 
   if (variantCount === 1) {
-    document.getElementById('resultText').textContent = currentCaption;
+    renderCaption(currentCaption, document.getElementById('resultText'));
   } else {
     document.querySelectorAll('.variant-card.selected .variant-card-body').forEach(b => {
-      b.textContent = currentCaption;
+      renderCaption(currentCaption, b);
     });
   }
 }
@@ -1489,7 +1607,7 @@ function createHistoryItem(entry) {
 
   const captionEl = document.createElement('div');
   captionEl.className = 'history-item-caption';
-  captionEl.textContent = entry.captions[activeIdx] || '';
+  renderCaption(entry.captions[activeIdx] || '', captionEl);
 
   if (entry.captions.length > 1) {
     const tabs = document.createElement('div');
@@ -1502,7 +1620,7 @@ function createHistoryItem(entry) {
         e.stopPropagation();
         activeIdx = idx;
         tabs.querySelectorAll('button').forEach((b, i) => b.classList.toggle('active', i === activeIdx));
-        captionEl.textContent = entry.captions[activeIdx];
+        renderCaption(entry.captions[activeIdx], captionEl);
       };
       tabs.appendChild(tabBtn);
     });
@@ -1519,7 +1637,7 @@ function createHistoryItem(entry) {
   copyBtn.onclick = async (e) => {
     e.stopPropagation();
     try {
-      await navigator.clipboard.writeText(entry.captions[activeIdx]);
+      await navigator.clipboard.writeText(getCopyableCaption(entry.captions[activeIdx]));
       copyBtn.textContent = 'コピー済み';
       copyBtn.classList.add('copied');
       setTimeout(() => {
@@ -1588,7 +1706,8 @@ async function clearAllHistory() {
 
 // --- コピー ---
 async function copyResult() {
-  const text = document.getElementById('resultText').textContent;
+  // songs パート（🎵以降）はコピー対象外
+  const text = getCopyableCaption(document.getElementById('resultText').textContent);
   try {
     await navigator.clipboard.writeText(text);
     const btn = document.getElementById('copyBtn');
@@ -1621,25 +1740,48 @@ function hideError() {
 
 // ===== セルフテスト（?test=1 で起動） =====
 function runSelfTests() {
-  const sample = '日本語1\n日本語2\n日本語3\n日本語4\n日本語5\n日本語6\n日本語7\n日本語8\n\nEnglish1\nEnglish2\nEnglish3\nEnglish4\nEnglish5\nEnglish6\nEnglish7\nEnglish8\n\n#tag1 #tag2 #tag3 #tag4 #tag5';
-  const parts = splitCaption(sample);
-  console.assert(parts.jp.split('\n').length === 8, '[selfTest] JP should be 8 lines');
-  console.assert(parts.en.split('\n').length === 8, '[selfTest] EN should be 8 lines');
-  console.assert(parts.tags.includes('#tag5'), '[selfTest] tags parsed');
+  // 旧フォーマット（songsなし、後方互換）
+  const sample3 = '日本語1\n日本語2\n日本語3\n日本語4\n日本語5\n日本語6\n日本語7\n日本語8\n\nEnglish1\nEnglish2\nEnglish3\nEnglish4\nEnglish5\nEnglish6\nEnglish7\nEnglish8\n\n#tag1 #tag2 #tag3 #tag4 #tag5';
+  const p3 = splitCaption(sample3);
+  console.assert(p3.jp.split('\n').length === 8, '[selfTest] JP 8 lines');
+  console.assert(p3.en.split('\n').length === 8, '[selfTest] EN 8 lines');
+  console.assert(p3.tags.includes('#tag5'), '[selfTest] tags parsed');
+  console.assert(p3.songs === '', '[selfTest] no songs returns empty');
+  console.assert(mergeCaption(p3) === sample3, '[selfTest] 3-part roundtrip');
+  console.assert(getCopyableCaption(sample3) === sample3, '[selfTest] backward compat (no songs)');
 
-  const merged = mergeCaption(parts);
-  console.assert(merged === sample, '[selfTest] roundtrip mismatch');
-
-  const replaced = mergeCaption({ ...parts, jp: 'JP_NEW' });
+  // 部分書き換え（既存）
+  const replaced = mergeCaption({ ...p3, jp: 'JP_NEW' });
   console.assert(replaced.startsWith('JP_NEW'), '[selfTest] jp replaced');
   console.assert(replaced.includes('English8'), '[selfTest] en preserved');
   console.assert(replaced.includes('#tag5'), '[selfTest] tags preserved');
 
   // 不完全フォーマット
   const partial = splitCaption('only japanese');
-  console.assert(partial.jp === 'only japanese', '[selfTest] partial jp');
-  console.assert(partial.en === '', '[selfTest] partial en empty');
-  console.assert(partial.tags === '', '[selfTest] partial tags empty');
+  console.assert(partial.jp === 'only japanese' && partial.en === '' && partial.tags === '' && partial.songs === '', '[selfTest] partial');
+
+  // 4パートフォーマット（songsあり）
+  const sample4 = sample3 + '\n\n🎵 おすすめ楽曲\nA Tribe Called Quest — Electric Relaxation（ジャズ感）\nDJ Premier — Above the Clouds（深さ）\nNas — N.Y. State of Mind（ヘビー）';
+  const p4 = splitCaption(sample4);
+  console.assert(p4.songs.startsWith('🎵'), '[selfTest] songs section starts with mark');
+  console.assert(p4.songs.includes('A Tribe Called Quest'), '[selfTest] songs has artist');
+  console.assert(p4.tags === '#tag1 #tag2 #tag3 #tag4 #tag5', '[selfTest] tags exact when songs present');
+  console.assert(p4.jp === p3.jp && p4.en === p3.en, '[selfTest] jp/en unchanged when songs added');
+  console.assert(mergeCaption(p4) === sample4, '[selfTest] 4-part roundtrip');
+
+  // getCopyableCaption: songs除外
+  const copyable = getCopyableCaption(sample4);
+  console.assert(!copyable.includes('🎵'), '[selfTest] copyable excludes 🎵');
+  console.assert(!copyable.includes('Tribe'), '[selfTest] copyable excludes artist');
+  console.assert(copyable.includes('#tag5'), '[selfTest] copyable preserves tags');
+  console.assert(copyable === sample3, '[selfTest] copyable equals 3-part version');
+
+  // 曲のみ再生成シミュレーション
+  const newSongs = '🎵 おすすめ楽曲\nNew Artist — New Song（新規）';
+  const replaced4 = mergeCaption({ ...p4, songs: newSongs });
+  console.assert(replaced4.includes('New Song'), '[selfTest] songs replaced');
+  console.assert(replaced4.includes('日本語8'), '[selfTest] jp preserved when songs replaced');
+  console.assert(replaced4.includes('#tag5'), '[selfTest] tags preserved when songs replaced');
 
   console.log('[Dine&Rhyme] selfTests OK');
 }
