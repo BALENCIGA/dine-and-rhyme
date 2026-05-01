@@ -1084,43 +1084,29 @@ async function callGemini({ apiKey, model, base64Images, prompt }) {
 }
 
 // --- 共通生成関数 ---
-async function runGenerate({ apiKey, model, base64Images, shopName, comment, variantCount, baseCaption = null, directive = null }) {
+// variantCount > 1 のときは **逐次実行**。Safari + Gemini で並列3本同時発射すると
+// "Load failed" でまとめて落ちる事象が確認されたため、安定性を優先して直列化。
+// onPartial(idx, result) で1本完了ごとに呼び出し → progressive UI を実現
+async function runGenerate({ apiKey, model, base64Images, shopName, comment, variantCount, baseCaption = null, directive = null, onPartial = null }) {
   const prompt = baseCaption
     ? buildRegenPrompt(shopName, comment, baseCaption, directive)
     : buildPrompt(shopName, comment) + (directive ? `\n\nAdditional directive:\n${directive}` : '');
 
-  if (variantCount === 1) {
-    const text = await callGemini({ apiKey, model, base64Images, prompt });
-    return [{ ok: true, text }];
-  }
-
-  // 並列 N 本
-  const tasks = Array.from({ length: variantCount }, () =>
-    callGemini({ apiKey, model, base64Images, prompt })
-  );
-  const settled = await Promise.allSettled(tasks);
-
-  // 全て429ならフォールバック: 直列リトライ
-  const all429 = settled.every(s => s.status === 'rejected' && s.reason?.code === 429);
-  if (all429) {
-    const out = [];
-    for (let i = 0; i < variantCount; i++) {
-      try {
-        const text = await callGemini({ apiKey, model, base64Images, prompt });
-        out.push({ ok: true, text });
-        if (i < variantCount - 1) await new Promise(r => setTimeout(r, 1500));
-      } catch (e) {
-        out.push({ ok: false, err: e.message });
-      }
+  const results = [];
+  for (let i = 0; i < variantCount; i++) {
+    let r;
+    try {
+      const text = await callGemini({ apiKey, model, base64Images, prompt });
+      r = { ok: true, text };
+    } catch (e) {
+      r = { ok: false, err: e.message };
     }
-    return out;
+    results.push(r);
+    if (onPartial) onPartial(i, r);
+    // 連続発射時の負荷を抑える小休止（最後の1本後は不要）
+    if (i < variantCount - 1) await new Promise(res => setTimeout(res, 300));
   }
-
-  return settled.map(s =>
-    s.status === 'fulfilled'
-      ? { ok: true, text: s.value }
-      : { ok: false, err: s.reason?.message || '生成に失敗しました' }
-  );
+  return results;
 }
 
 // --- 入力バリデーション ---
@@ -1166,24 +1152,33 @@ async function generate() {
   try {
     const filesToProcess = selectedFiles.slice(0, 10);
     const base64Images = await Promise.all(filesToProcess.map(f => fileToBase64(f, 1024, 0.8)));
-
-    const results = await runGenerate({
-      ...ctx, base64Images, variantCount
-    });
-
-    // サムネは採用時に作るが、3案モードでは結果を出した時点で1度だけ作っておく
     const thumbBlobs = await Promise.all(filesToProcess.map(f => fileToThumbBlob(f)));
 
     if (variantCount === 1) {
+      const results = await runGenerate({ ...ctx, base64Images, variantCount: 1 });
       const r = results[0];
       if (!r.ok) throw new Error(r.err);
       adoptCaption(r.text, ctx, filesToProcess.length, thumbBlobs, [r.text], 0);
+      document.getElementById('result').classList.add('show');
+      document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
     } else {
-      renderVariantCards(results, ctx, filesToProcess.length, thumbBlobs);
-    }
+      // 3案モード: progressive 表示（1本ずつカードを埋める）
+      const cards = renderVariantPlaceholders(variantCount);
+      document.getElementById('result').classList.add('show');
+      document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
 
-    document.getElementById('result').classList.add('show');
-    document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+      // ローディングオーバーレイは1本目が出るまでに留める
+      const allCaptionsRef = { current: [] };
+      await runGenerate({
+        ...ctx, base64Images, variantCount,
+        onPartial: (idx, r) => {
+          if (r.ok) allCaptionsRef.current[idx] = r.text;
+          fillVariantCard(cards[idx], idx, r, ctx, filesToProcess.length, thumbBlobs, allCaptionsRef);
+          // 1本目が出たらローディング非表示にして体感を早める
+          if (idx === 0) document.getElementById('loading').classList.remove('show');
+        }
+      });
+    }
 
   } catch (err) {
     showError(err.message);
@@ -1194,68 +1189,93 @@ async function generate() {
   }
 }
 
-// --- 3案カードを描画 ---
-function renderVariantCards(results, ctx, thumbCount, thumbBlobs) {
+// --- 3案: 空のプレースホルダカードを先に描画 ---
+function renderVariantPlaceholders(count) {
   const wrap = document.getElementById('variantCards');
   wrap.innerHTML = '';
   wrap.style.display = 'flex';
-
-  // 採用候補のキャプション全文を保持（採用時の履歴保存に使う）
-  const allCaptions = results.map(r => r.ok ? r.text : null);
-
-  results.forEach((r, idx) => {
+  const cards = [];
+  for (let i = 0; i < count; i++) {
     const card = document.createElement('div');
-    card.className = 'variant-card' + (r.ok ? '' : ' error-card');
-
-    if (!r.ok) {
-      card.innerHTML = `<div class="variant-card-header">案 ${idx + 1}</div><div>生成失敗: ${escapeHtml(r.err || '')}</div>`;
-      wrap.appendChild(card);
-      return;
-    }
-
-    const header = document.createElement('div');
-    header.className = 'variant-card-header';
-    header.innerHTML = `<span>案 ${idx + 1}</span><span>${countLines(r.text)} 行</span>`;
-
-    const body = document.createElement('div');
-    body.className = 'variant-card-body';
-    body.textContent = r.text;
-
-    const actions = document.createElement('div');
-    actions.className = 'variant-card-actions';
-
-    const copyBtn = document.createElement('button');
-    copyBtn.textContent = 'コピー';
-    copyBtn.onclick = async () => {
-      try {
-        await navigator.clipboard.writeText(r.text);
-        copyBtn.textContent = 'コピー済み';
-        copyBtn.classList.add('copied');
-        setTimeout(() => {
-          copyBtn.textContent = 'コピー';
-          copyBtn.classList.remove('copied');
-        }, 2000);
-      } catch {
-        showError('自動コピーに失敗しました');
-      }
-    };
-
-    const adoptBtn = document.createElement('button');
-    adoptBtn.textContent = 'これを採用';
-    adoptBtn.onclick = () => {
-      // 全カードのselected解除→このカードだけ
-      wrap.querySelectorAll('.variant-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      adoptCaption(r.text, ctx, thumbCount, thumbBlobs, allCaptions, idx);
-    };
-
-    actions.appendChild(copyBtn);
-    actions.appendChild(adoptBtn);
-    card.appendChild(header);
-    card.appendChild(body);
-    card.appendChild(actions);
+    card.className = 'variant-card';
+    card.innerHTML = `
+      <div class="variant-card-header">
+        <span>案 ${i + 1}</span>
+        <span class="variant-status" style="color:#888;font-weight:400">${i === 0 ? '生成中…' : '待機中'}</span>
+      </div>
+      <div class="variant-card-body" style="opacity:0.4;color:#666;min-height:40px">…</div>
+    `;
     wrap.appendChild(card);
-  });
+    cards.push(card);
+  }
+  return cards;
+}
+
+// --- 3案: 1枚のカードを結果で埋める（progressive） ---
+function fillVariantCard(card, idx, result, ctx, thumbCount, thumbBlobs, allCaptionsRef) {
+  card.innerHTML = '';
+
+  if (!result.ok) {
+    card.classList.add('error-card');
+    card.innerHTML = `<div class="variant-card-header"><span>案 ${idx + 1}</span></div><div>生成失敗: ${escapeHtml(result.err || '')}</div>`;
+    setNextPlaceholderActive(idx);
+    return;
+  }
+
+  const text = result.text;
+
+  const header = document.createElement('div');
+  header.className = 'variant-card-header';
+  header.innerHTML = `<span>案 ${idx + 1}</span><span>${countLines(text)} 行</span>`;
+
+  const body = document.createElement('div');
+  body.className = 'variant-card-body';
+  body.textContent = text;
+
+  const actions = document.createElement('div');
+  actions.className = 'variant-card-actions';
+
+  const copyBtn = document.createElement('button');
+  copyBtn.textContent = 'コピー';
+  copyBtn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = 'コピー済み';
+      copyBtn.classList.add('copied');
+      setTimeout(() => {
+        copyBtn.textContent = 'コピー';
+        copyBtn.classList.remove('copied');
+      }, 2000);
+    } catch {
+      showError('自動コピーに失敗しました');
+    }
+  };
+
+  const adoptBtn = document.createElement('button');
+  adoptBtn.textContent = 'これを採用';
+  adoptBtn.onclick = () => {
+    document.getElementById('variantCards').querySelectorAll('.variant-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    const validCaptions = allCaptionsRef.current.filter(Boolean);
+    adoptCaption(text, ctx, thumbCount, thumbBlobs, validCaptions, validCaptions.indexOf(text));
+  };
+
+  actions.appendChild(copyBtn);
+  actions.appendChild(adoptBtn);
+  card.appendChild(header);
+  card.appendChild(body);
+  card.appendChild(actions);
+
+  setNextPlaceholderActive(idx);
+}
+
+// 1本完了するごとに次のカードのステータスを「生成中…」に切り替え
+function setNextPlaceholderActive(currentIdx) {
+  const wrap = document.getElementById('variantCards');
+  const next = wrap.querySelectorAll('.variant-card')[currentIdx + 1];
+  if (!next) return;
+  const status = next.querySelector('.variant-status');
+  if (status && status.textContent === '待機中') status.textContent = '生成中…';
 }
 
 // --- キャプションを「採用」状態にする（履歴保存 + 部分再生成可能化） ---
