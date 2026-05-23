@@ -806,10 +806,13 @@ function getCopyableCaption(text) {
   return mergeCaption({ jp: p.jp, en: p.en, tags: p.tags });
 }
 // 表示用: 本文と songs を区切り線で視覚分離して container に流し込む
+// 併せて container.dataset.fullCaption に元テキストを保持し、コピー処理はこちらを参照する
+// (textContent 経由だと境界テキストや古いクロージャ値が混入するのを避ける)
 function renderCaption(text, container) {
   const parts = splitCaption(text);
   const mainPart = mergeCaption({ jp: parts.jp, en: parts.en, tags: parts.tags });
   container.innerHTML = '';
+  container.dataset.fullCaption = text;
 
   const mainEl = document.createElement('div');
   mainEl.textContent = mainPart;
@@ -1356,7 +1359,8 @@ function fillVariantCard(card, idx, result, ctx, thumbCount, thumbBlobs, allCapt
   copyBtn.textContent = 'コピー';
   copyBtn.onclick = async () => {
     try {
-      await navigator.clipboard.writeText(getCopyableCaption(text));
+      // body.dataset.fullCaption を参照することで再生成後の最新キャプションを取得する
+      await navigator.clipboard.writeText(getCopyableCaption(body.dataset.fullCaption));
       copyBtn.textContent = 'コピー済み';
       copyBtn.classList.add('copied');
       setTimeout(() => {
@@ -1707,7 +1711,10 @@ async function clearAllHistory() {
 // --- コピー ---
 async function copyResult() {
   // songs パート（🎵以降）はコピー対象外
-  const text = getCopyableCaption(document.getElementById('resultText').textContent);
+  // renderCaption が dataset.fullCaption に元テキストを保存しているのでそれを参照する
+  // (textContent だと境界テキストがタグ末尾に癒着するため)
+  const resultEl = document.getElementById('resultText');
+  const text = getCopyableCaption(resultEl.dataset.fullCaption || resultEl.textContent);
   try {
     await navigator.clipboard.writeText(text);
     const btn = document.getElementById('copyBtn');
